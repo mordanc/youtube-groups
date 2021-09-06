@@ -9,7 +9,6 @@ import {
   Button,
   Input,
   Stack,
-  Box,
 } from "@chakra-ui/react";
 import React from "react";
 import { useEffect, useReducer } from "react";

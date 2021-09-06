@@ -1,7 +1,7 @@
 import React from "react";
 import Group from "../molecules/Group";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import { useDisclosure, Button, IconButton } from "@chakra-ui/react";
+import { useDisclosure, IconButton } from "@chakra-ui/react";
 import Sidebar from "./Sidebar";
 
 const GroupList = () => {
