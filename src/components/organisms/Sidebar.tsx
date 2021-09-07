@@ -9,67 +9,31 @@ import {
   Button,
   Input,
   Stack,
+  HStack,
 } from "@chakra-ui/react";
-import React from "react";
-import { useEffect, useReducer } from "react";
+import { mockChannels } from "mockData";
+import React, { useState } from "react";
 
 export const SelectableChannel = ({
   onClick,
-  channelName,
+  channelInfo,
 }: {
   onClick?: () => any;
-  channelName?: string;
+  channelInfo: Channel;
 }) => {
   return (
     <span
       onClick={onClick}
       className="py-1 pl-2 transition border border-gray-600 rounded hover:bg-gray-700"
     >
-      {channelName || "Youtuber"}
+      {channelInfo?.name || "Youtuber"}
     </span>
   );
 };
 
-export type Channel = { id: number; name: string };
-
-export type State = { groupName: string; subscriptions: Channel[] };
-
-const initialState: State = { groupName: "", subscriptions: [] };
-
-function reducer(state: any, action: any): Partial<State> {
-  switch (action.type) {
-    case "updateGroupName":
-      return { groupName: action.payload.groupName };
-    case "removeChannel": {
-      const newArray = state.subscriptions.filter(
-        (item: Channel) => item?.id !== action.payload?.id
-      );
-      return { subscriptions: newArray };
-    }
-    case "addChannel": {
-      const newArray = [...state.subscriptions, action.payload];
-      return { subscriptions: newArray };
-    }
-    default:
-      throw new Error();
-  }
-}
-
-export const useSidebarState = () => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  const addChannel = (channel: Channel) =>
-    dispatch({ type: "addChannel", payload: channel });
-
-  const removeChannel = (channel: Channel) =>
-    dispatch({ type: "removeChannel", payload: channel });
-
-  const updateGroupName = (name: string) =>
-    dispatch({ type: "updateGroupName", payload: name });
-
-  const selectGroupName = () => state.groupName;
-
-  return { addChannel, removeChannel, state, updateGroupName, selectGroupName };
+export type Channel = {
+  id: number;
+  name: string;
 };
 
 const Sidebar = ({
@@ -81,25 +45,27 @@ const Sidebar = ({
   onClose: () => any;
   btnRef: any;
 }) => {
-  // const [state, dispatch] = useReducer(reducer, initialState);
+  const [groupName, setGroupName] = useState("");
+  const [channels, setChannels] = useState<Channel[]>([]);
 
-  const { addChannel, removeChannel, state, updateGroupName, selectGroupName } =
-    useSidebarState();
+  const sortChannelsInPlace = (channelArray: Channel[]) =>
+    channelArray.sort((a, b) => a.name.localeCompare(b.name));
 
-  useEffect(() => {
-    console.log({ ...state.subscriptions });
-  }, [state]);
+  const addOrRemoveChannel = (channel: Channel) => {
+    const channelInList = channels.findIndex((chann) => {
+      return chann.id === channel.id;
+    });
 
-  const toggleChannel = (channel: Channel) => {
-    console.log(channel);
-    const itemIsInArray = state.subscriptions?.find(
-      (sub) => sub?.id === channel?.id
-    );
-    if (itemIsInArray) {
-      addChannel(channel);
+    let newArray = [...channels];
+
+    if (channelInList !== -1) {
+      newArray.splice(channelInList, 1);
     } else {
-      removeChannel(channel);
+      newArray = [...newArray, channel];
     }
+
+    sortChannelsInPlace(newArray);
+    setChannels(newArray);
   };
 
   return (
@@ -118,30 +84,26 @@ const Sidebar = ({
 
         <DrawerBody>
           <Stack spacing="8">
-            <Input placeholder="Group name..." />
-            <span className="pt-16 text-xl ">{selectGroupName()}</span>
-            <button
-              onClick={() =>
-                updateGroupName(`${Math.floor(Math.random() * 100)} group`)
-              }
-            >
-              ffff
-            </button>
+            <Input
+              placeholder="Group name..."
+              value={groupName}
+              onChange={(e) => setGroupName(e?.target?.value)}
+            />
 
-            <span>Selected Groups</span>
-            <div>
-              {state?.subscriptions?.map((sub) => (
-                <span>{sub?.name}</span>
+            <span>Selected Channels</span>
+            <HStack>
+              {channels.map((channel, i) => (
+                <span key={i}>{channel?.name}</span>
               ))}
-            </div>
+            </HStack>
             <Stack>
-              <SelectableChannel
-                channelName="ACG"
-                onClick={() => toggleChannel({ name: "ACG", id: 1 })}
-              />
-              <SelectableChannel channelName="Skill Up" />
-              <SelectableChannel channelName="Force Gaming" />
-              <SelectableChannel channelName="Angry Joe Show" />
+              {sortChannelsInPlace?.(mockChannels)?.map((channel, i) => (
+                <SelectableChannel
+                  key={i}
+                  channelInfo={channel}
+                  onClick={() => addOrRemoveChannel(channel)}
+                />
+              ))}
             </Stack>
           </Stack>
         </DrawerBody>
