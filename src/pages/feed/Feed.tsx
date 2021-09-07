@@ -1,51 +1,49 @@
+import { useEffect, useState } from "react";
 import { Stack } from "@chakra-ui/react";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import {
-  GoogleLogin,
-  GoogleLoginResponse,
-  GoogleLoginResponseOffline,
-} from "react-google-login";
-import { Subscription, UserSubscriptionsResponse } from "types";
+import { GoogleLogin, GoogleLogout } from "react-google-login";
+
 import HoverButton from "../../components/atoms/HoverButton";
 import GroupList from "../../components/organisms/GroupList";
+import { useAuthentication } from "./hooks/useAuthentication";
+
+import { UserService } from "services/User";
+
+import { Subscription } from "types";
 
 const Feed = () => {
-  const [accessToken, setAccessToken] = useState<null | string>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+
+  const {
+    isAuthenticated,
+    accessToken,
+    handleGoogleAuthResponse,
+    handleGoogleLogout,
+  } = useAuthentication();
 
   const clientID = process.env.REACT_APP_CLIENT_ID;
 
-  const responseGoogle = (
-    response: GoogleLoginResponse | GoogleLoginResponseOffline
-  ) => {
-    console.log(response);
-    if (response.code === undefined) {
-      //@ts-ignore
-      setAccessToken(response?.accessToken);
-    } else {
-      alert("Error authenticating with Google");
-    }
-  };
-
   useEffect(() => {
-    async function hi() {
-      const API_KEY = process.env.REACT_APP_API_KEY;
-      const response = await axios.get<UserSubscriptionsResponse>(
-        `https://youtube.googleapis.com/youtube/v3/subscriptions?part=snippet%2CcontentDetails&channelId=UCDlFeY4sylL04DM6izwpF-A&pageToken=CAUQAA&key=${API_KEY}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+    async function getSubscriptions() {
+      if (!accessToken) {
+        return;
+      }
 
-      console.log("-----------------------------------------");
-      console.log({ response });
+      const channelID = "UCDlFeY4sylL04DM6izwpF-A";
+
+      const response = await UserService.getSubscriptionsByChannelID(
+        channelID,
+        accessToken
+      );
 
       setSubscriptions(response.data.items);
     }
 
-    if (accessToken) {
-      hi();
+    if (accessToken && subscriptions.length === 0) {
+      getSubscriptions();
+    } else if (!accessToken && subscriptions.length > 0) {
+      setSubscriptions([]);
     }
-  }, [accessToken]);
+  }, [accessToken, subscriptions]);
 
   return (
     <div className="flex flex-col bg-gray-700">
@@ -53,21 +51,30 @@ const Feed = () => {
         <HoverButton />
         <GroupList />
         <div className="mt-20">
-          {clientID && (
+          {clientID && !isAuthenticated && (
             <GoogleLogin
               clientId={clientID}
               buttonText="Login"
-              onSuccess={responseGoogle}
-              onFailure={responseGoogle}
+              onSuccess={handleGoogleAuthResponse}
+              onFailure={handleGoogleAuthResponse}
               cookiePolicy={"single_host_origin"}
               scope="https://www.googleapis.com/auth/youtube.readonly"
+              isSignedIn={accessToken !== null}
+            />
+          )}
+
+          {clientID && isAuthenticated && (
+            <GoogleLogout
+              clientId={clientID}
+              buttonText="Logout"
+              onLogoutSuccess={handleGoogleLogout}
             />
           )}
 
           {accessToken}
           <Stack>
-            {subscriptions.map((sub) => (
-              <span>{sub?.snippet?.title}</span>
+            {subscriptions.map((sub, i) => (
+              <span key={i}>{sub?.snippet?.title}</span>
             ))}
           </Stack>
           {/* <ThumbnailList /> */}
