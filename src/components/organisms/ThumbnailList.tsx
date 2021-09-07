@@ -8,8 +8,8 @@ export const ThumbnailSection = ({ videoId }: { videoId: string }) => {
   };
 
   return (
-    <div>
-      <span className="text-black text-xl">
+    <div className="truncate text-black ">
+      <span className="text-xl">
         Tom Scott - Why Britain uses separate separate separate separate
       </span>
       <div className="mt-4">
@@ -22,7 +22,7 @@ export const ThumbnailSection = ({ videoId }: { videoId: string }) => {
 const ThumbnailList = () => {
   return (
     <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 px-2 py-2">
-      <div className="px-2 rounded flex flex-col space-y-4 truncate">
+      <div className="px-2 rounded flex flex-col space-y-4 md:space-y-0 md:gap-4 truncate md:grid-flow-row md:grid-rows-4 md:grid-cols-4 md:grid">
         <ThumbnailSection videoId={"9uZam0ubq-Y"} />
         <ThumbnailSection videoId={"9uZam0ubq-Y"} />
         <ThumbnailSection videoId={"9uZam0ubq-Y"} />
